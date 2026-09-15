@@ -8,7 +8,6 @@
 </head>
 <body>
     <main>
-        <!-- スタート画面 -->
         <div id="suta-togamen">
             <img src="logo.svg" alt="アプリロゴ" class="app-logo">
             <h1 class="app-title">Health Support</h1>
@@ -16,15 +15,10 @@
             <button id="sutatobotan">スタート</button>
         </div>
 
-        <!-- 初期入力画面 -->
         <div class="hidden" id="syokinyuuryoku">
             <h1>性別</h1>
-            <label>
-                <input type="radio" name="gender" value="男性">男性
-            </label>
-            <label>
-                <input type="radio" name="gender" value="女性">女性
-            </label>
+            <label><input type="radio" name="gender" value="男性">男性</label>
+            <label><input type="radio" name="gender" value="女性">女性</label>
 
             <h1>年齢</h1>
             <select name="年齢" id="nenrei">
@@ -37,14 +31,14 @@
             <h1>身長</h1>
             <p>身長を入力してください</p>
             <div class="input-unit">
-                <input type="number" id="shintyo" min="120" max="230" step="0.1" inputmode="decimal" placeholder="例：170">
+                <input type="number" id="shintyo" min="120" max="230" step="0.1" inputmode="decimal" placeholder="120〜230">
                 <span>cm</span>
             </div>
 
             <h1>体重</h1>
             <p>現在の体重を入力してください</p>
             <div class="input-unit">
-                <input type="number" id="taiju" min="30" max="250" step="0.1" inputmode="decimal" placeholder="例：60">
+                <input type="number" id="taiju" min="30" max="250" step="0.1" inputmode="decimal" placeholder="30〜250">
                 <span>kg</span>
             </div>
 
@@ -52,7 +46,7 @@
                 <h2>目標</h2>
                 <p>目標体重を入力してください。減量・維持・増量のすべてに対応しています。</p>
                 <div class="input-unit">
-                    <input type="number" id="mtaiju" min="30" max="250" step="0.1" inputmode="decimal" placeholder="例：65">
+                    <input type="number" id="mtaiju" min="30" max="250" step="0.1" inputmode="decimal" placeholder="30〜250">
                     <span>kg</span>
                 </div>
                 <p id="mokuhyouHoukou" class="goal-direction">目標体重を入力すると目標タイプを表示します。</p>
@@ -64,12 +58,12 @@
                 <input type="date" id="mokuhyouKijitsu">
             </div>
 
-            <p class="button-area">
-                <button id="nyuryokutugihe">次へ</button>
-            </p>
+            <div class="button-row">
+                <button type="button" class="back-button" id="syokiModoruButton">戻る</button>
+                <button type="button" id="nyuryokutugihe">次へ</button>
+            </div>
         </div>
 
-        <!-- 今日の入力画面 -->
         <div class="hidden" id="sonohinyuuryokugamen">
             <h1>今日やったこと</h1>
 
@@ -101,10 +95,17 @@
 
             <h2>行った運動</h2>
             <select name="運動" id="undousentaku">
-                <option value="">運動なし / 選択してください</option>
-                <option value="running">ランニング</option>
+                <option value="">運動なし</option>
                 <option value="walking">ウォーキング</option>
+                <option value="briskWalking">早歩き</option>
+                <option value="running">ランニング</option>
+                <option value="cycling">自転車</option>
+                <option value="strength">筋力トレーニング</option>
                 <option value="squat">スクワット</option>
+                <option value="swimming">水泳</option>
+                <option value="stairs">階段昇降</option>
+                <option value="jumpRope">縄跳び</option>
+                <option value="yoga">ヨガ・ストレッチ</option>
             </select>
 
             <div id="undoujikan">
@@ -115,16 +116,12 @@
                 </div>
             </div>
 
-            <h2>行った行動</h2>
-            <p class="field-note">運動以外で健康のために意識したことや、その日の活動を自由に記録できます。</p>
-            <textarea id="koudou" maxlength="300" rows="4" placeholder="例：階段を使った、水分を意識した、間食を控えた など"></textarea>
-
-            <p class="button-area">
-                <button id="keisanButton">今日の結果を見る</button>
-            </p>
+            <div class="button-row">
+                <button type="button" class="back-button" id="nyuryokuModoruButton">戻る</button>
+                <button type="button" id="keisanButton">今日の結果を見る</button>
+            </div>
         </div>
 
-        <!-- 結果画面 -->
         <div class="hidden" id="sonohinokekka">
             <h1>今日の結果</h1>
 
@@ -138,7 +135,10 @@
             <div id="souhyou" class="result-box">---</div>
 
             <p class="save-note">保存すると今日の入力内容と結果をこのブラウザに保存します。</p>
-            <button id="hozonButton">保存する</button>
+            <div class="button-row">
+                <button type="button" class="back-button" id="kekkaModoruButton">戻る</button>
+                <button type="button" id="hozonButton">保存する</button>
+            </div>
         </div>
     </main>
 
