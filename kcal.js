@@ -9,7 +9,7 @@ let taiju;
 let bmi;
 let mtaiju;
 let mbmi;
-let mokuhyouKijitsu;
+let mokuhyouPlanMonths;
 let kisotaisya;
 let sekcal = 0;
 let shkcal = 0;
@@ -34,7 +34,7 @@ const shintyoBox = document.getElementById('shintyo');
 const taijuBox = document.getElementById('taiju');
 const mtaijuBox = document.getElementById('mtaiju');
 const mbmiBox = document.getElementById('mbmi');
-const mokuhyouKijitsuBox = document.getElementById('mokuhyouKijitsu');
+const mokuhyouPlanBox = document.getElementById('mokuhyouPlan');
 const mokuhyouHoukou = document.getElementById('mokuhyouHoukou');
 const nyuryokutugihe = document.getElementById('nyuryokutugihe');
 
@@ -59,7 +59,6 @@ const numericInputs = [
     gohan, men, pan, kudamono, yasai, nomimono, jikan
 ];
 
-setDateMinimum();
 setupNumericLimits();
 
 sutatobotan.addEventListener('click', () => {
@@ -109,9 +108,9 @@ nyuryokutugihe.addEventListener('click', () => {
     shintyo = Number(shintyoBox.value);
     taiju = Number(taijuBox.value);
     mtaiju = Number(mtaijuBox.value);
-    mokuhyouKijitsu = mokuhyouKijitsuBox.value;
+    mokuhyouPlanMonths = Number(mokuhyouPlanBox.value);
 
-    if (!seibetu || !nenrei || !shintyoBox.value || !taijuBox.value || !mtaijuBox.value || !mokuhyouKijitsu) {
+    if (!seibetu || !nenrei || !shintyoBox.value || !taijuBox.value || !mtaijuBox.value || !mokuhyouPlanMonths) {
         alert('未入力項目があります。');
         return;
     }
@@ -119,13 +118,6 @@ nyuryokutugihe.addEventListener('click', () => {
     if (!validateRange(shintyoBox, '身長') ||
         !validateRange(taijuBox, '体重') ||
         !validateRange(mtaijuBox, '目標体重')) {
-        return;
-    }
-
-    const today = startOfToday();
-    const goalDate = parseLocalDate(mokuhyouKijitsu);
-    if (!goalDate || goalDate <= today) {
-        alert('目標期日は明日以降の日付を選んでください。');
         return;
     }
 
@@ -182,7 +174,7 @@ hozonButton.addEventListener('click', () => {
             bmi: Number(bmi.toFixed(1)),
             targetWeight: mtaiju,
             targetBmi: Number(mbmi.toFixed(1)),
-            targetDate: mokuhyouKijitsu,
+            targetPlanMonths: mokuhyouPlanMonths,
             goalType: mokuhyouType
         },
         today: {
@@ -297,8 +289,7 @@ function setBasalMetabolism() {
 }
 
 function calculateGoalPlan() {
-    const goalDate = parseLocalDate(mokuhyouKijitsu);
-    const days = Math.max(1, Math.ceil((goalDate - startOfToday()) / 86400000));
+    const days = Math.max(30, mokuhyouPlanMonths * 30);
     const weightDiff = mtaiju - taiju;
     dailyAdjust = (weightDiff * 7700) / days;
     dailyAdjust = Math.max(-500, Math.min(500, dailyAdjust));
@@ -315,7 +306,6 @@ function calculateCalories() {
     sekcal = Math.round(sekcal);
 
     const exerciseMinutes = numberOrZero(jikan.value);
-    const exercise = undousentaku.value;
     const perMinute = {
         walking: 4,
         briskWalking: 5,
@@ -328,7 +318,7 @@ function calculateCalories() {
         jumpRope: 10,
         yoga: 3
     };
-    shkcal = Math.round(exerciseMinutes * (perMinute[exercise] || 0));
+    shkcal = Math.round(exerciseMinutes * (perMinute[undousentaku.value] || 0));
 }
 
 function showResult() {
@@ -337,8 +327,8 @@ function showResult() {
 
     const estimatedTarget = Math.round(kisotaisya + dailyAdjust);
     const difference = sekcal - estimatedTarget;
-    const recommendations = buildRecommendations(difference, estimatedTarget);
-    const review = buildReview(difference, estimatedTarget);
+    const recommendations = buildRecommendations(difference);
+    const review = buildReview(difference);
 
     ashitaOsusume.innerHTML = recommendations
         .map((item) => `<p><strong>${escapeHtml(item.title)}</strong><br>${escapeHtml(item.text)}</p>`)
@@ -356,41 +346,37 @@ function showResult() {
     tuginogamenhe(sonohinyuuryokugamen, sonohinokekka);
 }
 
-function buildRecommendations(difference, estimatedTarget) {
+function buildRecommendations(difference) {
     let meal;
     let exercise;
     let lifestyle;
 
     if (mokuhyouType === 'gain') {
-        if (difference < -250) {
-            meal = '主食だけで増やすのではなく、肉・魚・卵・乳製品なども組み合わせて、食事量を少し増やしてみましょう。';
-        } else if (difference > 350) {
-            meal = '増量中でも一度に増やしすぎず、明日は普段の食事量に近づけてバランスを整えるのがおすすめです。';
-        } else {
-            meal = '今の食事量を大きく崩さず、主食・たんぱく質・野菜や果物をそろえることを意識しましょう。';
-        }
-        exercise = '筋力トレーニングや軽い有酸素運動を無理のない範囲で続け、食事と休養もセットで考えましょう。';
-        lifestyle = '体重だけでなく睡眠や疲労感も確認し、急に増やしすぎないペースを意識しましょう。';
+        meal = difference < -250
+            ? '主食とたんぱく質を少し増やし、無理なく食事量を上げましょう。'
+            : difference > 350
+                ? '増量中でも食べすぎは避け、明日は普段の量に少し戻しましょう。'
+                : '今の量を大きく変えず、主食・たんぱく質・野菜や果物をそろえましょう。';
+        exercise = '筋トレを中心に、疲れを残さない範囲で継続しましょう。';
+        lifestyle = '睡眠と休養も確保し、急に体重を増やしすぎないようにしましょう。';
     } else if (mokuhyouType === 'loss') {
-        if (difference > 250) {
-            meal = '食事を抜くのではなく、明日は量を少し整えて、主食・たんぱく質・野菜や果物をバランスよく選びましょう。';
-        } else if (difference < -350) {
-            meal = '今日は食事量がかなり少なめです。明日は無理に減らし続けず、必要な食事をとることを優先しましょう。';
-        } else {
-            meal = '今の食事量を基準に、間食や飲み物も含めて無理なく続けられるバランスを意識しましょう。';
-        }
+        meal = difference > 250
+            ? '食事を抜かず、明日は量を少し整えましょう。'
+            : difference < -350
+                ? '今日は少なめです。明日は減らしすぎず、必要な食事をとりましょう。'
+                : '今の量を基準に、間食や飲み物も含めて無理なく続けましょう。';
         exercise = shkcal === 0
-            ? '体調に問題がなければ、ウォーキングなど続けやすい運動から始めるのがおすすめです。'
-            : '今日の運動量を基準に、無理なく続けられる強度を保つのがおすすめです。';
-        lifestyle = '短期間で大きく落とそうとせず、できるだけ同じ条件で体重を記録して変化を見ましょう。';
+            ? '体調が良ければ、短いウォーキングから始めましょう。'
+            : '今日くらいの運動量を無理なく続けましょう。';
+        lifestyle = '短期間で落としすぎず、同じ条件で体重を記録して変化を見ましょう。';
     } else {
         meal = Math.abs(difference) <= 250
-            ? '現在の食事量を大きく変えず、食品の偏りが出ないようにバランスを意識しましょう。'
-            : '体重維持が目標なので、食事量の大きな増減を避けて普段のペースに戻すのがおすすめです。';
+            ? '今の食事量を大きく変えず、バランスを意識しましょう。'
+            : '体重維持が目標なので、明日は普段の食事量に戻しましょう。';
         exercise = shkcal === 0
-            ? '健康維持のために、軽いウォーキングやストレッチなど取り入れやすい運動がおすすめです。'
-            : '今日と同程度の無理のない運動を継続するのがおすすめです。';
-        lifestyle = '食事・運動・睡眠など、続けやすい生活リズムを優先しましょう。';
+            ? '軽いウォーキングやストレッチを取り入れるのがおすすめです。'
+            : '今日と同程度の運動を無理なく続けましょう。';
+        lifestyle = '食事・運動・睡眠のリズムを崩さないことを優先しましょう。';
     }
 
     return [
@@ -400,36 +386,28 @@ function buildRecommendations(difference, estimatedTarget) {
     ];
 }
 
-function buildReview(difference, estimatedTarget) {
-    const goalLabel = mokuhyouType === 'gain' ? '増量' : mokuhyouType === 'loss' ? '減量' : '体重維持';
-    const goalDateText = formatDate(mokuhyouKijitsu);
-    const comments = [
-        `現在は「${goalLabel}」を目標として、${goalDateText}までの記録を進めています。`,
-        `今日の摂取カロリーは約${sekcal} kcal、運動による消費は約${shkcal} kcalでした。`
-    ];
+function buildReview(difference) {
+    const comments = [];
 
     if (Math.abs(difference) <= 250) {
-        comments.push('今日の食事量は、設定した目標ペースから大きく外れていません。1日だけで判断せず、数日単位で変化を見るのがおすすめです。');
+        comments.push('今日は目標ペースから大きく外れていません。この調子で続けましょう。');
     } else if (difference > 250) {
-        comments.push(`アプリ内の簡易目安（約${estimatedTarget} kcal）より今日は多めでした。明日だけ極端に減らすのではなく、少しずつ整えてください。`);
+        comments.push('今日は食事量がやや多めです。明日は少しだけ量を整えましょう。');
     } else {
-        comments.push(`アプリ内の簡易目安（約${estimatedTarget} kcal）より今日は少なめでした。目標が減量でも、食事を極端に減らし続けるのは避けましょう。`);
+        comments.push('今日は食事量が少なめです。無理に減らしすぎないようにしましょう。');
     }
 
     if (numberOrZero(yasai.value) === 0 && numberOrZero(kudamono.value) === 0) {
-        comments.push('野菜・果物の記録がありません。食べている場合は記録し、明日はどちらかを食事に加えると内容を整えやすくなります。');
-    } else {
-        comments.push('野菜または果物の記録があります。量だけでなく、食事全体の組み合わせも意識すると記録がより役立ちます。');
+        comments.push('野菜か果物を1品追加すると、食事のバランスを取りやすくなります。');
     }
 
     if (undousentaku.value) {
-        comments.push(`今日は${exerciseName(undousentaku.value)}を${numberOrZero(jikan.value)}分行っています。無理のない範囲で継続してください。`);
+        comments.push(`${exerciseName(undousentaku.value)}を${numberOrZero(jikan.value)}分できています。無理のない範囲で継続しましょう。`);
     } else {
-        comments.push('今日は運動の記録がありません。休養日でなければ、短時間のウォーキングなどから始めてもよいでしょう。');
+        comments.push('運動は未記録です。余裕があれば短時間の運動を入れてみましょう。');
     }
 
-    comments.push('この結果は入力した食品量と簡易計算による目安です。体調や治療目的の食事管理が必要な場合は、医師や管理栄養士などの専門家の指示を優先してください。');
-    return comments;
+    return comments.slice(0, 3);
 }
 
 function exerciseName(value) {
@@ -480,7 +458,7 @@ function resetInputs() {
     document.querySelectorAll('input[name="gender"]').forEach((item) => {
         item.checked = false;
     });
-    document.querySelectorAll('input[type="number"], input[type="text"], input[type="date"]').forEach((item) => {
+    document.querySelectorAll('input[type="number"], input[type="text"]').forEach((item) => {
         item.value = '';
     });
     document.querySelectorAll('select').forEach((item) => {
@@ -489,7 +467,6 @@ function resetInputs() {
 
     document.getElementById('mokuhyou').classList.add('hidden');
     mokuhyouHoukou.textContent = '目標体重を入力すると目標タイプを表示します。';
-    setDateMinimum();
 
     seibetu = undefined;
     nenrei = undefined;
@@ -498,45 +475,11 @@ function resetInputs() {
     bmi = undefined;
     mtaiju = undefined;
     mbmi = undefined;
-    mokuhyouKijitsu = undefined;
+    mokuhyouPlanMonths = undefined;
     kisotaisya = undefined;
     mokuhyouType = 'maintain';
     dailyAdjust = 0;
     currentResult = null;
-}
-
-function setDateMinimum() {
-    const tomorrow = new Date();
-    tomorrow.setHours(0, 0, 0, 0);
-    tomorrow.setDate(tomorrow.getDate() + 1);
-    mokuhyouKijitsuBox.min = toLocalDateString(tomorrow);
-}
-
-function startOfToday() {
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    return today;
-}
-
-function parseLocalDate(dateText) {
-    if (!/^\d{4}-\d{2}-\d{2}$/.test(dateText)) return null;
-    const [year, month, day] = dateText.split('-').map(Number);
-    const date = new Date(year, month - 1, day);
-    date.setHours(0, 0, 0, 0);
-    return date;
-}
-
-function toLocalDateString(date) {
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, '0');
-    const day = String(date.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
-}
-
-function formatDate(dateText) {
-    const date = parseLocalDate(dateText);
-    if (!date) return dateText;
-    return `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日`;
 }
 
 function numberOrZero(value) {
