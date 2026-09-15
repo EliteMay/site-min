@@ -79,6 +79,7 @@ const numericInputs = [
     gohan, men, pan, kudamono, yasai, nomimono, jikan
 ];
 
+setupAchievementUI();
 setupNumericLimits();
 refreshHome();
 
@@ -188,11 +189,12 @@ hozonButton.addEventListener('click', () => {
     const dateKey = toLocalDateString(now);
     const startDate = existing?.startDate || now.toISOString();
     const history = Array.isArray(existing?.history) ? existing.history : [];
+    const currentWeight = Number(genzaiTaiju.value);
 
     const record = {
         date: dateKey,
         savedAt: now.toISOString(),
-        weight: Number(genzaiTaiju.value),
+        weight: currentWeight,
         food: {
             rice: numberOrZero(gohan.value),
             noodles: numberOrZero(men.value),
@@ -211,17 +213,30 @@ hozonButton.addEventListener('click', () => {
     else history.push(record);
     history.sort((a, b) => String(a.date).localeCompare(String(b.date)));
 
+    const achievedNow = hasReachedGoal(
+        mokuhyouType,
+        currentWeight,
+        mtaiju,
+        new Date(startDate),
+        mokuhyouPlanMonths,
+        now
+    );
+    const wasAchieved = Boolean(existing?.goalAchieved);
+
     const savedData = {
-        version: 2,
+        version: 3,
         startDate,
         savedAt: now.toISOString(),
+        goalAchieved: wasAchieved || achievedNow,
+        achievedAt: wasAchieved ? existing.achievedAt : achievedNow ? now.toISOString() : null,
+        achievedWeight: wasAchieved ? existing.achievedWeight : achievedNow ? currentWeight : null,
         profile: {
             gender: seibetu,
             ageGroup: nenrei,
             height: shintyo,
             startWeight: taiju,
             weight: taiju,
-            currentWeight: Number(genzaiTaiju.value),
+            currentWeight,
             bmi: Number(bmi.toFixed(1)),
             targetWeight: mtaiju,
             targetBmi: Number(mbmi.toFixed(1)),
@@ -232,6 +247,12 @@ hozonButton.addEventListener('click', () => {
     };
 
     localStorage.setItem(STORAGE_KEY, JSON.stringify(savedData));
+
+    if (achievedNow && !wasAchieved) {
+        showGoalCelebration(savedData);
+        return;
+    }
+
     alert('保存しました。進捗をホームに反映しました。');
     goHome();
 });
@@ -246,9 +267,12 @@ function goHome() {
 
 function refreshHome() {
     const saved = readSavedData();
+    const achievedCard = document.getElementById('goalAchievedCard');
+
     if (!saved) {
         tudukikara.classList.add('hidden');
         homeSummary.classList.add('hidden');
+        achievedCard.classList.add('hidden');
         return;
     }
 
@@ -259,9 +283,20 @@ function refreshHome() {
     const targetWeight = Number(profile.targetWeight);
     const months = Number(profile.targetPlanMonths) || 3;
     const goalType = getGoalType(startWeight, targetWeight);
+    const startDate = new Date(saved.startDate || saved.savedAt || Date.now());
+    const achieved = Boolean(saved.goalAchieved) || hasReachedGoal(goalType, currentWeight, targetWeight, startDate, months, new Date());
+
+    if (achieved) {
+        homeSummary.classList.add('hidden');
+        tudukikara.classList.add('hidden');
+        showAchievedHomeCard(saved, currentWeight, targetWeight);
+        return;
+    }
+
+    achievedCard.classList.add('hidden');
+
     const progress = calculateWeightProgress(startWeight, currentWeight, targetWeight);
     const remaining = Math.abs(targetWeight - currentWeight);
-    const startDate = new Date(saved.startDate || saved.savedAt || Date.now());
     const deadline = addMonths(startDate, months);
     const expectedWeight = getExpectedWeight(startWeight, targetWeight, startDate, deadline, new Date());
     const paceText = buildPaceText(goalType, currentWeight, expectedWeight);
@@ -287,6 +322,11 @@ function continueFromSavedData() {
     if (!saved) {
         refreshHome();
         alert('保存データを読み込めませんでした。');
+        return;
+    }
+
+    if (saved.goalAchieved) {
+        goHome();
         return;
     }
 
@@ -538,6 +578,14 @@ function getGoalType(startWeight, targetWeight) {
     return 'maintain';
 }
 
+function hasReachedGoal(goalType, currentWeight, targetWeight, startDate, months, now = new Date()) {
+    if (goalType === 'loss') return currentWeight <= targetWeight;
+    if (goalType === 'gain') return currentWeight >= targetWeight;
+
+    const deadline = addMonths(startDate, months || 3);
+    return now >= deadline && Math.abs(currentWeight - targetWeight) <= 1;
+}
+
 function calculateWeightProgress(startWeight, currentWeight, targetWeight) {
     if (Math.abs(targetWeight - startWeight) < 0.1) return 100;
     const progress = ((currentWeight - startWeight) / (targetWeight - startWeight)) * 100;
@@ -631,4 +679,107 @@ function numberOrZero(value) {
 
 function escapeHtml(text) {
     return String(text).replaceAll('&', '&amp;').replaceAll('<', '&lt;').replaceAll('>', '&gt;').replaceAll('"', '&quot;').replaceAll("'", '&#039;');
+}
+
+function setupAchievementUI() {
+    if (document.getElementById('goalAchievedCard')) return;
+
+    const style = document.createElement('style');
+    style.textContent = `
+        .goal-achieved-card{margin:0 0 24px;padding:26px 22px;border:1px solid #dceede;border-radius:16px;background:#f3faf4;text-align:center}
+        .goal-achieved-mark{width:54px;height:54px;margin:0 auto 12px;display:grid;place-items:center;border-radius:50%;background:#37b64a;color:#fff;font-size:28px;font-weight:800;box-shadow:0 8px 18px rgba(55,182,74,.18)}
+        .goal-achieved-card h2{margin:0;color:#263238;font-size:22px}
+        .goal-achieved-card p{margin:8px 0 0;color:#59645f}
+        .goal-achieved-meta{display:flex;justify-content:center;gap:18px;margin-top:16px;font-size:13px;color:#7a8580}
+        .goal-achieved-meta strong{display:block;margin-top:2px;color:#2d963d;font-size:17px}
+        .achievement-overlay{position:fixed;inset:0;z-index:9999;display:grid;place-items:center;padding:24px;background:rgba(25,36,31,.48);backdrop-filter:blur(5px)}
+        .achievement-panel{position:relative;z-index:2;width:min(420px,100%);padding:34px 28px 28px;border-radius:22px;background:#fff;text-align:center;box-shadow:0 24px 70px rgba(0,0,0,.2);animation:achievement-pop .45s cubic-bezier(.2,.8,.2,1)}
+        .achievement-icon{width:72px;height:72px;margin:0 auto 16px;display:grid;place-items:center;border-radius:50%;background:#eaf7ec;color:#2d963d;font-size:38px;font-weight:800}
+        .achievement-panel h2{margin:0 0 8px;color:#263238;font-size:28px}
+        .achievement-panel p{margin:0;color:#59645f}
+        .achievement-weight{margin:16px 0 20px!important;font-size:18px!important;color:#2d963d!important;font-weight:700}
+        .achievement-panel button{margin-top:6px}
+        .confetti-layer{position:absolute;inset:0;overflow:hidden;pointer-events:none}
+        .confetti-piece{position:absolute;top:-24px;width:9px;height:16px;border-radius:2px;animation:confetti-fall linear forwards}
+        @keyframes achievement-pop{0%{opacity:0;transform:translateY(15px) scale(.94)}100%{opacity:1;transform:none}}
+        @keyframes confetti-fall{0%{transform:translate3d(0,-10px,0) rotate(0deg);opacity:1}100%{transform:translate3d(var(--drift),110vh,0) rotate(720deg);opacity:.1}}
+        @media (prefers-reduced-motion:reduce){.achievement-panel,.confetti-piece{animation:none!important}.confetti-piece{display:none}}
+    `;
+    document.head.appendChild(style);
+
+    const achievedCard = document.createElement('section');
+    achievedCard.id = 'goalAchievedCard';
+    achievedCard.className = 'goal-achieved-card hidden';
+    achievedCard.innerHTML = `
+        <div class="goal-achieved-mark">✓</div>
+        <h2>目標達成済み</h2>
+        <p>設定していた目標を達成しました。</p>
+        <div class="goal-achieved-meta">
+            <span>達成体重<strong id="achievedHomeWeight">-- kg</strong></span>
+            <span>達成日<strong id="achievedHomeDate">--</strong></span>
+        </div>
+    `;
+    homeSummary.insertAdjacentElement('afterend', achievedCard);
+
+    const overlay = document.createElement('div');
+    overlay.id = 'achievementOverlay';
+    overlay.className = 'achievement-overlay hidden';
+    overlay.innerHTML = `
+        <div class="confetti-layer" id="confettiLayer"></div>
+        <div class="achievement-panel" role="dialog" aria-modal="true" aria-labelledby="achievementTitle">
+            <div class="achievement-icon">✓</div>
+            <h2 id="achievementTitle">目標達成！</h2>
+            <p>設定していた体重目標に到達しました。</p>
+            <p class="achievement-weight" id="achievementWeightText"></p>
+            <button type="button" id="achievementCloseButton">ホームで確認する</button>
+        </div>
+    `;
+    document.body.appendChild(overlay);
+
+    document.getElementById('achievementCloseButton').addEventListener('click', () => {
+        overlay.classList.add('hidden');
+        goHome();
+    });
+}
+
+function showGoalCelebration(savedData) {
+    const overlay = document.getElementById('achievementOverlay');
+    const weightText = document.getElementById('achievementWeightText');
+    const weight = Number(savedData.achievedWeight ?? getLatestWeight(savedData));
+    const target = Number(savedData.profile.targetWeight);
+
+    weightText.textContent = `${formatWeight(weight)} kg / 目標 ${formatWeight(target)} kg`;
+    createConfetti();
+    overlay.classList.remove('hidden');
+}
+
+function showAchievedHomeCard(saved, currentWeight, targetWeight) {
+    const card = document.getElementById('goalAchievedCard');
+    const weightEl = document.getElementById('achievedHomeWeight');
+    const dateEl = document.getElementById('achievedHomeDate');
+    const achievedWeight = Number(saved.achievedWeight ?? currentWeight);
+    const achievedDate = new Date(saved.achievedAt || saved.savedAt || Date.now());
+
+    weightEl.textContent = `${formatWeight(achievedWeight)} kg`;
+    dateEl.textContent = formatShortDate(achievedDate);
+    card.querySelector('p').textContent = `目標 ${formatWeight(targetWeight)} kg を達成しました。`;
+    card.classList.remove('hidden');
+}
+
+function createConfetti() {
+    const layer = document.getElementById('confettiLayer');
+    if (!layer) return;
+    layer.innerHTML = '';
+    const colors = ['#37b64a', '#ffc857', '#5aa9e6', '#ff7b7b', '#8d7cf0'];
+
+    for (let i = 0; i < 42; i += 1) {
+        const piece = document.createElement('span');
+        piece.className = 'confetti-piece';
+        piece.style.left = `${Math.random() * 100}%`;
+        piece.style.background = colors[i % colors.length];
+        piece.style.animationDuration = `${2.6 + Math.random() * 2}s`;
+        piece.style.animationDelay = `${Math.random() * .7}s`;
+        piece.style.setProperty('--drift', `${-90 + Math.random() * 180}px`);
+        layer.appendChild(piece);
+    }
 }
