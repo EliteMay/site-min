@@ -26,6 +26,9 @@ const sonohinyuuryokugamen = document.getElementById('sonohinyuuryokugamen');
 const sonohinokekka = document.getElementById('sonohinokekka');
 
 const sutatobotan = document.getElementById('sutatobotan');
+const syokiModoruButton = document.getElementById('syokiModoruButton');
+const nyuryokuModoruButton = document.getElementById('nyuryokuModoruButton');
+const kekkaModoruButton = document.getElementById('kekkaModoruButton');
 const nenreisou = document.getElementById('nenrei');
 const shintyoBox = document.getElementById('shintyo');
 const taijuBox = document.getElementById('taiju');
@@ -43,7 +46,6 @@ const yasai = document.getElementById('yasai');
 const nomimono = document.getElementById('nomimono');
 const undousentaku = document.getElementById('undousentaku');
 const jikan = document.getElementById('jikan');
-const koudou = document.getElementById('koudou');
 const keisanButton = document.getElementById('keisanButton');
 const hozonButton = document.getElementById('hozonButton');
 
@@ -52,7 +54,13 @@ const sekarori = document.getElementById('sekarori');
 const ashitaOsusume = document.getElementById('ashitaOsusume');
 const souhyou = document.getElementById('souhyou');
 
+const numericInputs = [
+    shintyoBox, taijuBox, mtaijuBox,
+    gohan, men, pan, kudamono, yasai, nomimono, jikan
+];
+
 setDateMinimum();
+setupNumericLimits();
 
 sutatobotan.addEventListener('click', () => {
     if (localStorage.getItem(STORAGE_KEY)) {
@@ -65,6 +73,19 @@ sutatobotan.addEventListener('click', () => {
 
     resetInputs();
     tuginogamenhe(sutatogamen, syokinyuuryoku);
+});
+
+syokiModoruButton.addEventListener('click', () => {
+    tuginogamenhe(syokinyuuryoku, sutatogamen);
+});
+
+nyuryokuModoruButton.addEventListener('click', () => {
+    tuginogamenhe(sonohinyuuryokugamen, syokinyuuryoku);
+});
+
+kekkaModoruButton.addEventListener('click', () => {
+    currentResult = null;
+    tuginogamenhe(sonohinokekka, sonohinyuuryokugamen);
 });
 
 document.querySelectorAll('input[name="gender"]').forEach((gender) => {
@@ -114,25 +135,33 @@ nyuryokutugihe.addEventListener('click', () => {
 
     setBasalMetabolism();
     calculateGoalPlan();
-
     tuginogamenhe(syokinyuuryoku, sonohinyuuryokugamen);
 });
 
 keisanButton.addEventListener('click', () => {
-    const dailyInputs = [gohan, men, pan, kudamono, yasai, nomimono, jikan];
-    for (const input of dailyInputs) {
-        if (input.value !== '' && !validateRange(input, input.previousElementSibling?.textContent || '入力値')) {
-            return;
-        }
+    const dailyInputs = [
+        [gohan, 'ご飯'],
+        [men, '麺'],
+        [pan, 'パン'],
+        [kudamono, '果物'],
+        [yasai, '野菜'],
+        [nomimono, '飲み物'],
+        [jikan, '運動時間']
+    ];
+
+    for (const [input, label] of dailyInputs) {
+        if (input.value !== '' && !validateRange(input, label)) return;
     }
 
-    if (undousentaku.value && !jikan.value) {
-        alert('運動を選択した場合は運動時間も入力してください。');
+    if (undousentaku.value && (!jikan.value || Number(jikan.value) <= 0)) {
+        alert('運動を選択した場合は、運動時間を1分以上入力してください。');
+        jikan.focus();
         return;
     }
 
     if (!undousentaku.value && Number(jikan.value) > 0) {
         alert('運動時間を入力する場合は、行った運動も選択してください。');
+        undousentaku.focus();
         return;
     }
 
@@ -166,8 +195,7 @@ hozonButton.addEventListener('click', () => {
                 drink: numberOrZero(nomimono.value)
             },
             exercise: undousentaku.value,
-            exerciseMinutes: numberOrZero(jikan.value),
-            actions: koudou.value.trim()
+            exerciseMinutes: numberOrZero(jikan.value)
         },
         result: currentResult
     };
@@ -177,6 +205,50 @@ hozonButton.addEventListener('click', () => {
     tuginogamenhe(sonohinokekka, sutatogamen);
 });
 
+function setupNumericLimits() {
+    numericInputs.forEach((input) => {
+        input.addEventListener('input', () => {
+            if (input.value === '') return;
+            const value = Number(input.value);
+            const max = input.max === '' ? Infinity : Number(input.max);
+
+            if (!Number.isFinite(value)) {
+                input.value = '';
+                return;
+            }
+
+            if (value < 0) {
+                input.value = '0';
+            } else if (value > max) {
+                input.value = String(max);
+            }
+        });
+
+        input.addEventListener('blur', () => {
+            if (input.value === '') return;
+            const value = Number(input.value);
+            const min = input.min === '' ? -Infinity : Number(input.min);
+            const max = input.max === '' ? Infinity : Number(input.max);
+
+            if (!Number.isFinite(value) || value < min || value > max) {
+                alert(`${rangeLabel(input)}は${min}〜${max}の範囲で入力してください。`);
+                input.value = '';
+                if (input === shintyoBox || input === taijuBox) updateBodyValues();
+                if (input === mtaijuBox) updateGoalValues();
+            }
+        });
+    });
+}
+
+function rangeLabel(input) {
+    const labels = new Map([
+        [shintyoBox, '身長'], [taijuBox, '体重'], [mtaijuBox, '目標体重'],
+        [gohan, 'ご飯'], [men, '麺'], [pan, 'パン'], [kudamono, '果物'],
+        [yasai, '野菜'], [nomimono, '飲み物'], [jikan, '運動時間']
+    ]);
+    return labels.get(input) || '入力値';
+}
+
 function updateBodyValues() {
     shintyo = Number(shintyoBox.value);
     taiju = Number(taijuBox.value);
@@ -185,6 +257,8 @@ function updateBodyValues() {
         bmi = taiju / (shintyo / 100) ** 2;
         document.getElementById('mokuhyou').classList.remove('hidden');
         updateGoalValues();
+    } else {
+        document.getElementById('mokuhyou').classList.add('hidden');
     }
 }
 
@@ -211,6 +285,8 @@ function updateGoalValues() {
             mokuhyouType = 'maintain';
             mokuhyouHoukou.textContent = '目標タイプ：体重維持';
         }
+    } else {
+        mokuhyouHoukou.textContent = '目標体重を入力すると目標タイプを表示します。';
     }
 }
 
@@ -224,8 +300,6 @@ function calculateGoalPlan() {
     const goalDate = parseLocalDate(mokuhyouKijitsu);
     const days = Math.max(1, Math.ceil((goalDate - startOfToday()) / 86400000));
     const weightDiff = mtaiju - taiju;
-
-    // 体重変化に必要なエネルギーは個人差が大きいため、あくまでアプリ内の簡易目安。
     dailyAdjust = (weightDiff * 7700) / days;
     dailyAdjust = Math.max(-500, Math.min(500, dailyAdjust));
 }
@@ -243,9 +317,16 @@ function calculateCalories() {
     const exerciseMinutes = numberOrZero(jikan.value);
     const exercise = undousentaku.value;
     const perMinute = {
-        running: 8,
         walking: 4,
-        squat: 6
+        briskWalking: 5,
+        running: 8,
+        cycling: 7,
+        strength: 6,
+        squat: 6,
+        swimming: 8,
+        stairs: 8,
+        jumpRope: 10,
+        yoga: 3
     };
     shkcal = Math.round(exerciseMinutes * (perMinute[exercise] || 0));
 }
@@ -256,11 +337,12 @@ function showResult() {
 
     const estimatedTarget = Math.round(kisotaisya + dailyAdjust);
     const difference = sekcal - estimatedTarget;
-
     const recommendations = buildRecommendations(difference, estimatedTarget);
     const review = buildReview(difference, estimatedTarget);
 
-    ashitaOsusume.innerHTML = recommendations.map((item) => `<p><strong>${escapeHtml(item.title)}</strong><br>${escapeHtml(item.text)}</p>`).join('');
+    ashitaOsusume.innerHTML = recommendations
+        .map((item) => `<p><strong>${escapeHtml(item.title)}</strong><br>${escapeHtml(item.text)}</p>`)
+        .join('');
     souhyou.innerHTML = review.map((item) => `<p>${escapeHtml(item)}</p>`).join('');
 
     currentResult = {
@@ -277,40 +359,44 @@ function showResult() {
 function buildRecommendations(difference, estimatedTarget) {
     let meal;
     let exercise;
-    let action;
+    let lifestyle;
 
     if (mokuhyouType === 'gain') {
         if (difference < -250) {
-            meal = '主食だけで増やすのではなく、ご飯やパンなどの主食に、肉・魚・卵・乳製品などを組み合わせて食事量を少し増やしてみましょう。';
+            meal = '主食だけで増やすのではなく、肉・魚・卵・乳製品なども組み合わせて、食事量を少し増やしてみましょう。';
         } else if (difference > 350) {
-            meal = '増量中でも一度に大きく増やしすぎず、明日は普段の食事量に近づけてバランスを整えるのがおすすめです。';
+            meal = '増量中でも一度に増やしすぎず、明日は普段の食事量に近づけてバランスを整えるのがおすすめです。';
         } else {
-            meal = '今の食事量を大きく崩さず、主食・たんぱく質・野菜や果物をそろえることを意識してみましょう。';
+            meal = '今の食事量を大きく崩さず、主食・たんぱく質・野菜や果物をそろえることを意識しましょう。';
         }
-        exercise = '無理のない範囲で筋力トレーニングや軽い運動を取り入れ、食事と休養もセットで考えるのがおすすめです。';
-        action = '体重だけでなく、食事量・運動・体調の変化も一緒に記録すると増量のペースを確認しやすくなります。';
+        exercise = '筋力トレーニングや軽い有酸素運動を無理のない範囲で続け、食事と休養もセットで考えましょう。';
+        lifestyle = '体重だけでなく睡眠や疲労感も確認し、急に増やしすぎないペースを意識しましょう。';
     } else if (mokuhyouType === 'loss') {
         if (difference > 250) {
-            meal = '極端に食事を抜くのではなく、明日は量を少し整えて、主食・たんぱく質・野菜や果物をバランスよく選びましょう。';
+            meal = '食事を抜くのではなく、明日は量を少し整えて、主食・たんぱく質・野菜や果物をバランスよく選びましょう。';
         } else if (difference < -350) {
             meal = '今日は食事量がかなり少なめです。明日は無理に減らし続けず、必要な食事をとることを優先しましょう。';
         } else {
             meal = '今の食事量を基準に、間食や飲み物も含めて無理なく続けられるバランスを意識しましょう。';
         }
-        exercise = shkcal === 0 ? '体調に問題がなければ、軽いウォーキングなど続けやすい運動から始めるのがおすすめです。' : '今日の運動量を基準に、無理なく続けられる強度を保つのがおすすめです。';
-        action = '短期間で大きく落とそうとせず、同じ条件で体重を記録して変化を見ていきましょう。';
+        exercise = shkcal === 0
+            ? '体調に問題がなければ、ウォーキングなど続けやすい運動から始めるのがおすすめです。'
+            : '今日の運動量を基準に、無理なく続けられる強度を保つのがおすすめです。';
+        lifestyle = '短期間で大きく落とそうとせず、できるだけ同じ条件で体重を記録して変化を見ましょう。';
     } else {
         meal = Math.abs(difference) <= 250
             ? '現在の食事量を大きく変えず、食品の偏りが出ないようにバランスを意識しましょう。'
             : '体重維持が目標なので、食事量の大きな増減を避けて普段のペースに戻すのがおすすめです。';
-        exercise = shkcal === 0 ? '健康維持のために、軽いウォーキングやストレッチなど取り入れやすい運動がおすすめです。' : '今日と同程度の無理のない運動を継続するのがおすすめです。';
-        action = '食事・運動・睡眠など、続けやすい生活リズムを優先して記録を続けましょう。';
+        exercise = shkcal === 0
+            ? '健康維持のために、軽いウォーキングやストレッチなど取り入れやすい運動がおすすめです。'
+            : '今日と同程度の無理のない運動を継続するのがおすすめです。';
+        lifestyle = '食事・運動・睡眠など、続けやすい生活リズムを優先しましょう。';
     }
 
     return [
         { title: '食事', text: meal },
         { title: '運動', text: exercise },
-        { title: '行動', text: action }
+        { title: '生活', text: lifestyle }
     ];
 }
 
@@ -336,14 +422,30 @@ function buildReview(difference, estimatedTarget) {
         comments.push('野菜または果物の記録があります。量だけでなく、食事全体の組み合わせも意識すると記録がより役立ちます。');
     }
 
-    if (koudou.value.trim()) {
-        comments.push(`今日の行動メモ「${koudou.value.trim()}」も保存対象です。続けられた行動は、明日も無理のない範囲で繰り返してみましょう。`);
+    if (undousentaku.value) {
+        comments.push(`今日は${exerciseName(undousentaku.value)}を${numberOrZero(jikan.value)}分行っています。無理のない範囲で継続してください。`);
     } else {
-        comments.push('行動メモは未入力でした。運動以外の小さな工夫も残しておくと、後から振り返りやすくなります。');
+        comments.push('今日は運動の記録がありません。休養日でなければ、短時間のウォーキングなどから始めてもよいでしょう。');
     }
 
     comments.push('この結果は入力した食品量と簡易計算による目安です。体調や治療目的の食事管理が必要な場合は、医師や管理栄養士などの専門家の指示を優先してください。');
     return comments;
+}
+
+function exerciseName(value) {
+    const names = {
+        walking: 'ウォーキング',
+        briskWalking: '早歩き',
+        running: 'ランニング',
+        cycling: '自転車',
+        strength: '筋力トレーニング',
+        squat: 'スクワット',
+        swimming: '水泳',
+        stairs: '階段昇降',
+        jumpRope: '縄跳び',
+        yoga: 'ヨガ・ストレッチ'
+    };
+    return names[value] || '運動';
 }
 
 function validateRange(input, label) {
@@ -371,13 +473,14 @@ function isValueInRange(input) {
 function tuginogamenhe(kasusugamen, tuginogamen) {
     kasusugamen.classList.add('hidden');
     tuginogamen.classList.remove('hidden');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
 }
 
 function resetInputs() {
     document.querySelectorAll('input[name="gender"]').forEach((item) => {
         item.checked = false;
     });
-    document.querySelectorAll('input[type="number"], input[type="text"], input[type="date"], textarea').forEach((item) => {
+    document.querySelectorAll('input[type="number"], input[type="text"], input[type="date"]').forEach((item) => {
         item.value = '';
     });
     document.querySelectorAll('select').forEach((item) => {
