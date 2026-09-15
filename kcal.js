@@ -26,6 +26,7 @@ const sonohinyuuryokugamen = document.getElementById('sonohinyuuryokugamen');
 const sonohinokekka = document.getElementById('sonohinokekka');
 
 const sutatobotan = document.getElementById('sutatobotan');
+const tudukikara = document.getElementById('tudukikara');
 const syokiModoruButton = document.getElementById('syokiModoruButton');
 const nyuryokuModoruButton = document.getElementById('nyuryokuModoruButton');
 const kekkaModoruButton = document.getElementById('kekkaModoruButton');
@@ -60,6 +61,7 @@ const numericInputs = [
 ];
 
 setupNumericLimits();
+updateContinueButton();
 
 sutatobotan.addEventListener('click', () => {
     if (localStorage.getItem(STORAGE_KEY)) {
@@ -68,14 +70,20 @@ sutatobotan.addEventListener('click', () => {
         );
         if (!startNew) return;
         localStorage.removeItem(STORAGE_KEY);
+        updateContinueButton();
     }
 
     resetInputs();
     tuginogamenhe(sutatogamen, syokinyuuryoku);
 });
 
+tudukikara.addEventListener('click', () => {
+    continueFromSavedData();
+});
+
 syokiModoruButton.addEventListener('click', () => {
     tuginogamenhe(syokinyuuryoku, sutatogamen);
+    updateContinueButton();
 });
 
 nyuryokuModoruButton.addEventListener('click', () => {
@@ -193,9 +201,78 @@ hozonButton.addEventListener('click', () => {
     };
 
     localStorage.setItem(STORAGE_KEY, JSON.stringify(savedData));
+    updateContinueButton();
     alert('保存しました。');
     tuginogamenhe(sonohinokekka, sutatogamen);
 });
+
+function updateContinueButton() {
+    if (localStorage.getItem(STORAGE_KEY)) {
+        tudukikara.classList.remove('hidden');
+    } else {
+        tudukikara.classList.add('hidden');
+    }
+}
+
+function continueFromSavedData() {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) {
+        updateContinueButton();
+        return;
+    }
+
+    try {
+        const savedData = JSON.parse(raw);
+        const profile = savedData.profile;
+
+        if (!profile || !profile.gender || !profile.ageGroup || !profile.height || !profile.weight || !profile.targetWeight) {
+            throw new Error('invalid saved data');
+        }
+
+        seibetu = profile.gender;
+        nenrei = profile.ageGroup;
+        shintyo = Number(profile.height);
+        taiju = Number(profile.weight);
+        mtaiju = Number(profile.targetWeight);
+        bmi = Number(profile.bmi) || taiju / (shintyo / 100) ** 2;
+        mbmi = Number(profile.targetBmi) || mtaiju / (shintyo / 100) ** 2;
+        mokuhyouPlanMonths = Number(profile.targetPlanMonths) || 3;
+        mokuhyouType = profile.goalType || 'maintain';
+
+        const genderRadio = document.querySelector(`input[name="gender"][value="${seibetu}"]`);
+        if (genderRadio) genderRadio.checked = true;
+        nenreisou.value = nenrei;
+        shintyoBox.value = shintyo;
+        taijuBox.value = taiju;
+        mtaijuBox.value = mtaiju;
+        mbmiBox.value = mbmi.toFixed(1);
+        mokuhyouPlanBox.value = String(mokuhyouPlanMonths);
+        document.getElementById('mokuhyou').classList.remove('hidden');
+        updateGoalValues();
+        setBasalMetabolism();
+        calculateGoalPlan();
+        clearDailyInputs();
+        tuginogamenhe(sutatogamen, sonohinyuuryokugamen);
+    } catch (error) {
+        localStorage.removeItem(STORAGE_KEY);
+        updateContinueButton();
+        alert('保存データを読み込めませんでした。新しくスタートしてください。');
+    }
+}
+
+function clearDailyInputs() {
+    [gohan, men, pan, kudamono, yasai, nomimono, jikan].forEach((input) => {
+        input.value = '';
+    });
+    undousentaku.selectedIndex = 0;
+    sekcal = 0;
+    shkcal = 0;
+    currentResult = null;
+    shkarori.textContent = '0';
+    sekarori.textContent = '0';
+    ashitaOsusume.textContent = '---';
+    souhyou.textContent = '---';
+}
 
 function setupNumericLimits() {
     numericInputs.forEach((input) => {
