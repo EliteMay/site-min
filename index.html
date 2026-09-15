@@ -13,16 +13,53 @@
             <img src="logo.svg" alt="アプリロゴ" class="app-logo">
             <h1 class="app-title">Health Support</h1>
             <p class="app-subtitle">毎日の食事と運動をかんたん管理</p>
+
+            <section id="homeSummary" class="home-summary hidden" aria-live="polite">
+                <div class="home-summary-head">
+                    <div>
+                        <p class="summary-kicker">CURRENT PLAN</p>
+                        <h2>現在の進捗</h2>
+                    </div>
+                    <span id="homeGoalType" class="goal-badge">---</span>
+                </div>
+
+                <div class="weight-flow">
+                    <div><span>開始時</span><strong id="homeStartWeight">--</strong><small>kg</small></div>
+                    <div class="weight-arrow">→</div>
+                    <div><span>現在</span><strong id="homeCurrentWeight">--</strong><small>kg</small></div>
+                    <div class="weight-arrow">→</div>
+                    <div><span>目標</span><strong id="homeTargetWeight">--</strong><small>kg</small></div>
+                </div>
+
+                <div class="progress-line"><span id="homeProgressBar"></span></div>
+                <div class="progress-caption">
+                    <strong id="homeProgressText">進捗 --%</strong>
+                    <span id="homeRemainingText">残り -- kg</span>
+                </div>
+
+                <div class="plan-grid">
+                    <div class="plan-card"><span>プラン</span><strong id="homePlan">--</strong></div>
+                    <div class="plan-card"><span>目標目安</span><strong id="homeDeadline">--</strong></div>
+                    <div class="plan-card"><span>計画との差</span><strong id="homePace">--</strong></div>
+                    <div class="plan-card"><span>記録</span><strong id="homeRecordCount">--</strong></div>
+                </div>
+            </section>
+
             <button id="sutatobotan">スタート</button>
             <button type="button" class="back-button hidden" id="tudukikara">続きから</button>
         </div>
 
         <div class="hidden" id="syokinyuuryoku">
-            <h1>性別</h1>
+            <div class="screen-head">
+                <h1>基本設定</h1>
+                <button type="button" class="home-link" id="syokiHomeButton">ホーム</button>
+            </div>
+
+            <h2>性別</h2>
             <label><input type="radio" name="gender" value="男性">男性</label>
             <label><input type="radio" name="gender" value="女性">女性</label>
 
-            <h1>年齢</h1>
+            <h2>年齢</h2>
             <select name="年齢" id="nenrei">
                 <option value="">1つ選択してください</option>
                 <option value="seinen">18〜29歳</option>
@@ -30,15 +67,15 @@
                 <option value="kounen">50〜64歳</option>
             </select>
 
-            <h1>身長</h1>
+            <h2>身長</h2>
             <p>身長を入力してください</p>
             <div class="input-unit">
                 <input type="number" id="shintyo" min="120" max="230" step="0.1" inputmode="decimal" placeholder="120〜230">
                 <span>cm</span>
             </div>
 
-            <h1>体重</h1>
-            <p>現在の体重を入力してください</p>
+            <h2>開始時の体重</h2>
+            <p>この体重を進捗の基準にします。</p>
             <div class="input-unit">
                 <input type="number" id="taiju" min="30" max="250" step="0.1" inputmode="decimal" placeholder="30〜250">
                 <span>kg</span>
@@ -72,33 +109,25 @@
         </div>
 
         <div class="hidden" id="sonohinyuuryokugamen">
-            <h1>今日やったこと</h1>
+            <div class="screen-head">
+                <h1>今日やったこと</h1>
+                <button type="button" class="home-link" id="nyuryokuHomeButton">ホーム</button>
+            </div>
+
+            <h2>現在の体重</h2>
+            <p>今日の体重を入力すると、進捗に反映されます。</p>
+            <div class="input-unit">
+                <input type="number" id="genzaiTaiju" min="30" max="250" step="0.1" inputmode="decimal" placeholder="例：70.5">
+                <span>kg</span>
+            </div>
 
             <h2>今日食べたもの</h2>
-            <p>
-                <label for="gohan">ご飯</label>
-                <span class="input-unit"><input type="number" id="gohan" min="0" max="2000" step="1" placeholder="例：200"><span>g</span></span>
-            </p>
-            <p>
-                <label for="men">麺</label>
-                <span class="input-unit"><input type="number" id="men" min="0" max="2000" step="1" placeholder="例：150"><span>g</span></span>
-            </p>
-            <p>
-                <label for="pan">パン</label>
-                <span class="input-unit"><input type="number" id="pan" min="0" max="1000" step="1" placeholder="例：100"><span>g</span></span>
-            </p>
-            <p>
-                <label for="kudamono">果物</label>
-                <span class="input-unit"><input type="number" id="kudamono" min="0" max="2000" step="1" placeholder="例：100"><span>g</span></span>
-            </p>
-            <p>
-                <label for="yasai">野菜</label>
-                <span class="input-unit"><input type="number" id="yasai" min="0" max="2000" step="1" placeholder="例：150"><span>g</span></span>
-            </p>
-            <p>
-                <label for="nomimono">飲み物</label>
-                <span class="input-unit"><input type="number" id="nomimono" min="0" max="10000" step="1" placeholder="例：500"><span>ml</span></span>
-            </p>
+            <p><label for="gohan">ご飯</label><span class="input-unit"><input type="number" id="gohan" min="0" max="2000" step="1" placeholder="例：200"><span>g</span></span></p>
+            <p><label for="men">麺</label><span class="input-unit"><input type="number" id="men" min="0" max="2000" step="1" placeholder="例：150"><span>g</span></span></p>
+            <p><label for="pan">パン</label><span class="input-unit"><input type="number" id="pan" min="0" max="1000" step="1" placeholder="例：100"><span>g</span></span></p>
+            <p><label for="kudamono">果物</label><span class="input-unit"><input type="number" id="kudamono" min="0" max="2000" step="1" placeholder="例：100"><span>g</span></span></p>
+            <p><label for="yasai">野菜</label><span class="input-unit"><input type="number" id="yasai" min="0" max="2000" step="1" placeholder="例：150"><span>g</span></span></p>
+            <p><label for="nomimono">飲み物</label><span class="input-unit"><input type="number" id="nomimono" min="0" max="10000" step="1" placeholder="例：500"><span>ml</span></span></p>
 
             <h2>行った運動</h2>
             <select name="運動" id="undousentaku">
@@ -130,8 +159,12 @@
         </div>
 
         <div class="hidden" id="sonohinokekka">
-            <h1>今日の結果</h1>
+            <div class="screen-head">
+                <h1>今日の結果</h1>
+                <button type="button" class="home-link" id="kekkaHomeButton">ホーム</button>
+            </div>
 
+            <p>今日の体重<br><span id="kekkaTaiju">--</span> kg</p>
             <p>今日消費した運動カロリー<br><span id="shkarori">0</span> kcal</p>
             <p>今日摂取したカロリー<br><span id="sekarori">0</span> kcal</p>
 
@@ -141,7 +174,7 @@
             <h2>今日のフィードバック</h2>
             <div id="souhyou" class="result-box">---</div>
 
-            <p class="save-note">保存すると今日の入力内容と結果をこのブラウザに保存します。</p>
+            <p class="save-note">保存すると今日の体重・食事・運動・結果が履歴に追加されます。</p>
             <div class="button-row">
                 <button type="button" class="back-button" id="kekkaModoruButton">戻る</button>
                 <button type="button" id="hozonButton">保存する</button>
