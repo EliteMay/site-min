@@ -54,8 +54,13 @@
                 <p>目標BMI</p>
                 <input type="text" id="mbmi" value="" placeholder="自動計算" readonly>
 
-                <p>目標期日</p>
-                <input type="date" id="mokuhyouKijitsu">
+                <p>プラン</p>
+                <select id="mokuhyouPlan">
+                    <option value="">選択してください</option>
+                    <option value="1">1か月</option>
+                    <option value="3">3か月</option>
+                    <option value="6">6か月</option>
+                </select>
             </div>
 
             <div class="button-row">
@@ -131,7 +136,7 @@
             <h2>明日のおすすめ</h2>
             <div id="ashitaOsusume" class="result-box">---</div>
 
-            <h2>総評コメント</h2>
+            <h2>今日のフィードバック</h2>
             <div id="souhyou" class="result-box">---</div>
 
             <p class="save-note">保存すると今日の入力内容と結果をこのブラウザに保存します。</p>
