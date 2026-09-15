@@ -1,17 +1,24 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
   <title id="title">Health Support logo</title>
-  <desc id="desc">A custom H monogram with a pulse line and sprouting leaf, representing food, movement, and daily health support.</desc>
+  <desc id="desc">A food-focused green bowl logo with a spoon, fresh ingredients and a leaf, representing meal tracking and healthy daily habits.</desc>
 
-  <!-- Main monogram: two soft pillars form an H without using a generic medical cross. -->
-  <path fill="#37b64a" d="M116 165c0-24 19-43 43-43h18c24 0 43 19 43 43v73h72v-73c0-24 19-43 43-43h18c24 0 43 19 43 43v182c0 24-19 43-43 43h-18c-24 0-43-19-43-43v-69h-72v69c0 24-19 43-43 43h-18c-24 0-43-19-43-43V165z"/>
+  <!-- Fresh ingredients -->
+  <circle cx="116" cy="188" r="22" fill="#67c94f"/>
+  <circle cx="257" cy="137" r="18" fill="#37b64a"/>
 
-  <!-- Pulse path: the crossbar becomes a living, active rhythm. -->
-  <path d="M145 258h60l18-28 28 58 25-45 17 15h74" fill="none" stroke="#ffffff" stroke-width="18" stroke-linecap="round" stroke-linejoin="round"/>
+  <path fill="#6acb50" d="M145 171c0-34 25-60 58-60 31 0 56 22 58 52 9-14 24-23 42-23 29 0 52 24 52 53 0 23-14 43-34 50H176c-19-14-31-36-31-72z"/>
 
-  <!-- Growth leaf: unique top-right signature, angled to match the H stem. -->
-  <path fill="#24953a" d="M314 112c14-46 49-75 99-81-2 50-32 84-81 96-8 2-16-6-18-15z"/>
-  <path d="M325 111c23-29 49-49 76-61" fill="none" stroke="#37b64a" stroke-width="10" stroke-linecap="round"/>
+  <!-- Signature leaf -->
+  <path fill="#37b64a" d="M286 214c-8-63 26-118 99-144 19-7 37-10 52-11 2 74-20 132-66 166-26 20-54 28-85 29z"/>
+  <path d="M302 232c28-58 67-101 117-132" fill="none" stroke="#ffffff" stroke-width="11" stroke-linecap="round"/>
 
-  <!-- Support arc: subtle upward base, echoing the app's 'support' concept. -->
-  <path d="M171 403c51 31 119 31 170 0" fill="none" stroke="#8fd79a" stroke-width="14" stroke-linecap="round"/>
+  <!-- Bowl -->
+  <path fill="#37b64a" d="M73 228c0-9 7-16 16-16h334c9 0 16 7 16 16-3 91-55 170-130 199-17 7-35 11-53 11s-36-4-53-11C128 398 76 319 73 228z"/>
+
+  <!-- Spoon in negative-space style -->
+  <ellipse cx="212" cy="323" rx="50" ry="33" fill="#ffffff" transform="rotate(-12 212 323)"/>
+  <path d="M247 305c58-18 106-46 148-87" fill="none" stroke="#ffffff" stroke-width="20" stroke-linecap="round"/>
+
+  <!-- Friendly support arc -->
+  <path d="M151 452c64 32 146 32 210 0" fill="none" stroke="#8edb86" stroke-width="14" stroke-linecap="round"/>
 </svg>
