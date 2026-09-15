@@ -40,7 +40,39 @@ button { width: 100%; padding: 14px 20px; border: none; border-radius: 12px; bac
 button:hover { transform: translateY(-1px); box-shadow: 0 6px 15px rgba(55,182,74,.22); }
 button:active { transform: translateY(0); opacity: .85; }
 .back-button { background: #fff; color: #37b64a; border: 1px solid #37b64a; }
-.home-link { width: auto; padding: 8px 13px; background: #fff; color: #59645f; border: 1px solid #d9e0dc; font-size: 14px; }
+.home-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    width: auto;
+    padding: 4px 2px;
+    background: transparent;
+    color: #8a9690;
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1;
+    text-decoration: none;
+    cursor: pointer;
+    transition: color .15s ease;
+}
+.home-link::before {
+    content: "←";
+    font-size: 14px;
+    line-height: 1;
+}
+.home-link:hover {
+    color: #2d963d;
+    transform: none;
+    box-shadow: none;
+    text-decoration: none;
+}
+.home-link:active {
+    transform: none;
+    opacity: .7;
+}
 .button-row { display: grid; grid-template-columns: minmax(0,.8fr) minmax(0,1.2fr); gap: 12px; margin-top: 24px; }
 #tudukikara { margin-top: 10px; }
 
