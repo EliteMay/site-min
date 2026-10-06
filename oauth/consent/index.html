@@ -23,17 +23,64 @@ const details=document.querySelector("#details"), status=document.querySelector(
 const allow=document.querySelector("#allow"), deny=document.querySelector("#deny");
 const authorizationId=new URLSearchParams(location.search).get("authorization_id");
 const fail=(m)=>{status.className="status error";status.textContent=m};
+
 async function load(){
- if(!authorizationId){fail("authorization_id がありません。OAuth認可URLから開いてください。");details.textContent="認可要求を読み込めません。";return}
- const {data:{session}}=await supabase.auth.getSession();
- if(!session){sessionStorage.setItem("oauth_return",location.href);location.href="../login/";return}
- const {data,error}=await supabase.auth.oauth.getAuthorizationDetails(authorizationId);
- if(error){fail(error.message);return}
- const name=data?.client?.name||data?.client_name||"OAuth client";
- details.textContent=name+" がアクセス許可を要求しています。";
- allow.disabled=false;deny.disabled=false;
+  if(!authorizationId){
+    fail("authorization_id がありません。OAuth認可URLから開いてください。");
+    details.textContent="認可要求を読み込めません。";
+    return;
+  }
+
+  const {data:{user}}=await supabase.auth.getUser();
+  if(!user){
+    sessionStorage.setItem("oauth_return",location.href);
+    location.href="../login/";
+    return;
+  }
+
+  const {data,error}=await supabase.auth.oauth.getAuthorizationDetails(authorizationId);
+  if(error){fail(error.message);return}
+  if(!data){fail("認可情報を取得できませんでした。");return}
+
+  // すでに同意済みの場合、Supabaseは authorization_id ではなく redirect_url を返す。
+  if(!("authorization_id" in data)){
+    if(data.redirect_url){
+      sessionStorage.removeItem("oauth_return");
+      location.assign(data.redirect_url);
+      return;
+    }
+    fail("OAuthの戻り先URLを取得できませんでした。");
+    return;
+  }
+
+  const name=data?.client?.name||data?.client_name||"OAuth client";
+  const scopes=(data?.scope||"").trim();
+  details.textContent=name+" がアクセス許可を要求しています。"+(scopes?"\n要求スコープ: "+scopes:"");
+  allow.disabled=false;
+  deny.disabled=false;
 }
-allow.onclick=async()=>{allow.disabled=deny.disabled=true;status.textContent="許可しています…";const {data,error}=await supabase.auth.oauth.approveAuthorization(authorizationId);if(error)return fail(error.message);location.href=data.redirect_to};
-deny.onclick=async()=>{allow.disabled=deny.disabled=true;status.textContent="拒否しています…";const {data,error}=await supabase.auth.oauth.denyAuthorization(authorizationId);if(error)return fail(error.message);location.href=data.redirect_to};
+
+allow.onclick=async()=>{
+  allow.disabled=deny.disabled=true;
+  status.className="status";
+  status.textContent="許可しています…";
+  const {data,error}=await supabase.auth.oauth.approveAuthorization(authorizationId);
+  if(error){allow.disabled=deny.disabled=false;return fail(error.message)}
+  if(!data?.redirect_url){allow.disabled=deny.disabled=false;return fail("OAuthの戻り先URLを取得できませんでした。")}
+  sessionStorage.removeItem("oauth_return");
+  location.assign(data.redirect_url);
+};
+
+deny.onclick=async()=>{
+  allow.disabled=deny.disabled=true;
+  status.className="status";
+  status.textContent="拒否しています…";
+  const {data,error}=await supabase.auth.oauth.denyAuthorization(authorizationId);
+  if(error){allow.disabled=deny.disabled=false;return fail(error.message)}
+  if(!data?.redirect_url){allow.disabled=deny.disabled=false;return fail("OAuthの戻り先URLを取得できませんでした。")}
+  sessionStorage.removeItem("oauth_return");
+  location.assign(data.redirect_url);
+};
+
 load();
 </script></body></html>
