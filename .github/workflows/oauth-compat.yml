@@ -1,0 +1,29 @@
+name: OAuth compatibility redirects
+on:
+  pull_request:
+    paths:
+      - 'oauth/**'
+      - 'tests/oauth-compat.test.mjs'
+      - '.github/workflows/oauth-compat.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'oauth/**'
+      - 'tests/oauth-compat.test.mjs'
+      - '.github/workflows/oauth-compat.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check old URLs and Health Support
+        run: node --test tests/oauth-compat.test.mjs
