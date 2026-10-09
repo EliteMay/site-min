@@ -1,29 +1,29 @@
-# Health Support / Kaito PC Agent OAuth Pages
+# Health Support
 
-このRepositoryには、**用途の異なる2つのWebページ群**が存在します。用途・参照先を把握せずに統合・改名・削除・アーカイブを行わないでください。
+`site-min` の本体は食事・運動・体重を管理する **Health Support** です。
 
-## 現在の構成
+## 構成
 
 | パス | 役割 |
 | --- | --- |
-| [`index.html`](index.html) | **Health Support**：食事・運動・体重の記録画面 |
-| [`kcal.js`](kcal.js) / [`れんじ.css`](れんじ.css) | Health Supportの計算・画面処理と見た目 |
-| [`oauth/login/index.html`](oauth/login/index.html) | **Kaito PC Agent**向けSupabase OAuthログイン画面 |
-| [`oauth/consent/index.html`](oauth/consent/index.html) | **Kaito PC Agent**への接続を許可・拒否する同意画面 |
+| `index.html` | Health Support の画面 |
+| `kcal.js` / `れんじ.css` / `logo.svg` | Health Support の計算・見た目・画像 |
+| `oauth/login/index.html` | 旧URLとの互換性を保つ**転送ページ**（新: `pc-agent/oauth/login/`） |
+| `oauth/consent/index.html` | 旧URLとの互換性を保つ**転送ページ**（新: `pc-agent/oauth/consent/`） |
 
-Health Supportのページはブラウザ内での保存処理を実装しています。OAuth画面はSupabase AuthのSDKを呼び出すフロントエンドであり、このRepositoryだけでOAuthバックエンド全体が実装されるわけではありません。
+## PC Agent の認証画面は別Repositoryに移行
 
-## リポジトリ整理時の注意
+OAuthログイン、接続許可・拒否、Supabase Auth SDKの呼び出しを含む実装は、[EliteMay/pc-agent](https://github.com/EliteMay/pc-agent) の `web/oauth/` に移しています。
 
-- **OAuth関連のパスは動作中の認証・リダイレクト設定から参照されている可能性があります。** 外部設定の接続実態は、このREADME追加では確認していません。
-- Health SupportとPC Agent OAuthの責務分離は将来の検討事項です。分割・移動する場合は、先に実際のOAuth設定、登録済みRedirect URL、GitHub Pagesの公開URL、Supabase側の設定、利用中のクライアントを確認します。
-- 正式に移す前に`oauth/`を削除したり、RepositoryをArchive/Private化/改名したりしません。
-- OAuth認証の成功・PC Agent接続成功を、このREADME追加で保証しません。
-- APIキーやパスワード、SecretをIssueやREADMEに貼らず、セキュリティ境界は[PC Agent側の仕様](https://github.com/EliteMay/pc-agent)で確認してください。
+- 新ログイン: https://elitemay.github.io/pc-agent/oauth/login/
+- 新同意画面: https://elitemay.github.io/pc-agent/oauth/consent/
 
-## 関連するRepository
+旧URLは互換転送専用です。OAuthの認可画面に届いた `authorization_id` 等のクエリやURL fragmentを、そのまま同じOriginの新URLへ引き継ぎます。旧RepositoryにはSupabase SDK・認可・ログイン処理・PC操作処理を置きません。
 
-- [EliteMay/pc-agent](https://github.com/EliteMay/pc-agent) — PC Agent本体・Gateway・安全な操作承認の正本
-- [EliteMay/web-project-guide](https://github.com/EliteMay/web-project-guide) — 共通のWeb制作・認証・デプロイの安全ルール
+**ただし、Supabase側のOAuth Authorization Path / Site URLは別設定です。** 既存設定が旧URLを指していても認証を中断させないよう互換転送を維持します。設定内容を直接確認し、実際のOAuthログイン・許可/拒否を検証するまでは旧URLを削除・改名・Archiveしません。GitHub Pagesの実デプロイ確認とOAuthの実認証は別の完了条件です。
 
-> このドキュメントは既存のコード構成の説明です。機能、公開方法、認証設定には変更を加えていません。
+## 検証
+
+`node --test tests/oauth-compat.test.mjs`。GitHub Actionsでも静的検証します。運用上の残作業は [PC Agent Issue #39](https://github.com/EliteMay/pc-agent/issues/39) を確認してください。
+
+Health Support本体のデータ・画面・保存処理にはこの移行で変更を加えません。

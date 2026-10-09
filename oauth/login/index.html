@@ -1,7 +1,33 @@
-<!doctype html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Kaito OAuth Login</title><style>:root{color-scheme:dark;font-family:system-ui,-apple-system,sans-serif}body{margin:0;background:#0d1117;color:#e6edf3;min-height:100vh;display:grid;place-items:center}.card{width:min(460px,calc(100% - 32px));background:#161b22;border:1px solid #30363d;border-radius:16px;padding:24px;box-sizing:border-box}input,button{width:100%;box-sizing:border-box;padding:12px;border-radius:9px;margin-top:10px}input{background:#0d1117;border:1px solid #30363d;color:#fff}button{border:0;background:#238636;color:#fff;font-weight:700}.s{color:#9da7b3;font-size:14px;margin-top:12px}.e{color:#ff7b72}</style></head><body><main class="card"><h1>OAuthログイン</h1><p>Supabaseアカウントで認証します。</p><input id="email" type="email" autocomplete="email" placeholder="メールアドレス"><input id="password" type="password" autocomplete="current-password" placeholder="パスワード"><button id="login">ログイン</button><div class="s" id="status"></div></main><script type="module">
-import {createClient} from "https://esm.sh/@supabase/supabase-js@2";
-const supabase=createClient("https://vtnwbgejlaqpnwmlzbjy.supabase.co","sb_publishable_qMrXUwMbI0MjhYreNW4IJw_KCX_n5os");
-const status=document.querySelector("#status"),btn=document.querySelector("#login");
-const {data:{session}}=await supabase.auth.getSession();if(session){location.href=sessionStorage.getItem("oauth_return")||"../consent/"}
-btn.onclick=async()=>{btn.disabled=true;status.className="s";status.textContent="ログインしています…";const {error}=await supabase.auth.signInWithPassword({email:document.querySelector("#email").value,password:document.querySelector("#password").value});if(error){status.className="s e";status.textContent=error.message;btn.disabled=false;return}location.href=sessionStorage.getItem("oauth_return")||"../consent/"};
-</script></body></html>
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex">
+<title>OAuthログイン（移転案内）</title>
+<style>
+:root{color-scheme:dark;font-family:system-ui,-apple-system,sans-serif}
+body{margin:0;min-height:100vh;display:grid;place-items:center;background:#0d1117;color:#e6edf3}
+main{width:min(520px,calc(100% - 32px));box-sizing:border-box;padding:24px;border-radius:16px;border:1px solid #30363d;background:#161b22}
+p{line-height:1.7;color:#9da7b3}
+a{color:#80bfff}
+</style>
+<script>
+(function () {
+  "use strict";
+  // Compatibility route only. OAuth authentication and consent live in pc-agent.
+  const destination = new URL("/pc-agent/oauth/login/", location.origin);
+  destination.search = location.search;
+  destination.hash = location.hash;
+  location.replace(destination.href);
+})();
+</script>
+</head>
+<body>
+<main>
+  <h1>OAuthログインは移転しました</h1>
+  <p>PC Agentの認証画面に移動しています。</p>
+  <p>画面が切り替わらない場合は <a href="/pc-agent/oauth/login/">新しい認証画面を開く</a> を選んでください。認可の途中なら元の接続画面から再開してください。</p>
+</main>
+</body>
+</html>
